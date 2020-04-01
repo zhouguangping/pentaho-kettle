@@ -211,7 +211,7 @@
       <groupId>com.tinkerpop.blueprints</groupId>
       <artifactId>blueprints-core</artifactId>
       <version>${dependency.com.tinkerpop.blueprints.version}</version>
-      <scope>test</scope>
+<!--       <scope>test</scope> -->
     </dependency>
     <dependency>
       <groupId>org.powermock</groupId>

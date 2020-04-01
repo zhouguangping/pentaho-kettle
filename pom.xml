@@ -107,6 +107,17 @@
       <!-- Third-party dependencies -->
       <dependency>
         <groupId>org.eclipse.swt</groupId>
+        <artifactId>org.eclipse.swt.win32.win32.x86_64</artifactId>
+        <version>${org.eclipse.swt.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>*</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.swt</groupId>
         <artifactId>org.eclipse.swt.gtk.linux.x86_64</artifactId>
         <version>${org.eclipse.swt.version}</version>
         <exclusions>
@@ -217,7 +228,25 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-
+  <dependencies>
+    <dependency>
+      <groupId>org.eclipse.swt</groupId>
+      <artifactId>org.eclipse.swt.win32.win32.x86_64</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>jaxen</groupId>
+        <artifactId>jaxen</artifactId>
+    </dependency>
+    <dependency>
+       <groupId>org.slf4j</groupId>
+       <artifactId>slf4j-nop</artifactId>
+       <version>1.7.2</version>
+    </dependency>
+    <dependency>
+       <groupId>log4j</groupId>
+       <artifactId>log4j</artifactId>
+     </dependency>  
+  </dependencies>
   <build>
     <plugins>
       <plugin>
@@ -236,6 +265,81 @@
         </configuration>
       </plugin>
     </plugins>
+    <pluginManagement>
+    	<plugins>
+    		<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+    		<plugin>
+    			<groupId>org.eclipse.m2e</groupId>
+    			<artifactId>lifecycle-mapping</artifactId>
+    			<version>1.0.0</version>
+    			<configuration>
+    				<lifecycleMappingMetadata>
+    					<pluginExecutions>
+    						<pluginExecution>
+    							<pluginExecutionFilter>
+    								<groupId>
+    									org.pentaho.maven.plugins
+    								</groupId>
+    								<artifactId>
+    									license-helper-maven-plugin
+    								</artifactId>
+    								<versionRange>[1.27,)</versionRange>
+    								<goals>
+    									<goal>check-license</goal>
+    									<goal>bundle</goal>
+    								</goals>
+    							</pluginExecutionFilter>
+    							<action>
+    								<ignore></ignore>
+    							</action>
+    						</pluginExecution>
+    						<pluginExecution>
+    							<pluginExecutionFilter>
+    								<groupId>
+    									com.soebes.maven.plugins
+    								</groupId>
+    								<artifactId>
+    									iterator-maven-plugin
+    								</artifactId>
+    								<versionRange>
+    									[0.5.1,)
+    								</versionRange>
+    								<goals>
+    									<goal>iterator</goal>
+    								</goals>
+    							</pluginExecutionFilter>
+    							<action>
+    								<ignore></ignore>
+    							</action>
+    						</pluginExecution>
+    						<pluginExecution>
+    							<pluginExecutionFilter>
+    								<groupId>
+    									org.hitachivantara.karaf.tooling
+    								</groupId>
+    								<artifactId>
+    									karaf-maven-plugin
+    								</artifactId>
+    								<versionRange>
+    									[4.2.6-R2,)
+    								</versionRange>
+    								<goals>
+    									<goal>
+    										features-generate-descriptor
+    									</goal>
+    									<goal>verify</goal>
+    								</goals>
+    							</pluginExecutionFilter>
+    							<action>
+    								<ignore></ignore>
+    							</action>
+    						</pluginExecution>
+    					</pluginExecutions>
+    				</lifecycleMappingMetadata>
+    			</configuration>
+    		</plugin>
+    	</plugins>
+    </pluginManagement>
   </build>
 
   <profiles>
