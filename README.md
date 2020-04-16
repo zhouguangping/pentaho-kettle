@@ -1,5 +1,5 @@
 # Pentaho Data Integration # 
-
+## 对官方项目修改，用以在eclipse里编译运行
 Pentaho Data Integration ( ETL ) a.k.a Kettle
 
 ### Project Structure
