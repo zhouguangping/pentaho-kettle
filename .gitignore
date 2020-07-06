@@ -19,3 +19,4 @@ rebel.xml
 rebel-remote.xml
 
 **/logs
+**/log/
