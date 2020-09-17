@@ -201,6 +201,12 @@
   </kettle-variable>
 
   <kettle-variable>
+    <description>The timeout interval for the logging registry purge timer which cleanups of registry entries (in msecs).</description>
+    <variable>KETTLE_LOGGING_REGISTRY_PURGE_TIMEOUT</variable>
+    <default-value>60000</default-value>
+  </kettle-variable>
+
+  <kettle-variable>
     <description>The kettle log tab refresh delay.</description>
     <variable>KETTLE_LOG_TAB_REFRESH_DELAY</variable>
     <default-value>1000</default-value>
@@ -553,6 +559,12 @@
       Possible values: "LEGACY" (default), "MILLISECONDS", "NANOSECONDS".</description>
     <variable>KETTLE_TIMESTAMP_NUMBER_CONVERSION_MODE</variable>
     <default-value>LEGACY</default-value>
+  </kettle-variable>
+
+  <kettle-variable>
+    <description>This environment variable is used to enable the checking of zip bomb. This is set to false by default.</description>
+    <variable>KETTLE_XLSX_ZIP_BOMB_CHECK</variable>
+    <default-value>false</default-value>
   </kettle-variable>
 </kettle-variables>
 

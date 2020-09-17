@@ -26,6 +26,7 @@ package org.pentaho.di.core;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.text.StrBuilder;
+import org.apache.http.conn.util.InetAddressUtils;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.core.util.EnvUtil;
@@ -33,6 +34,7 @@ import org.pentaho.di.core.util.Utils;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.laf.BasePropertyHandler;
 import org.pentaho.di.version.BuildVersion;
+import org.pentaho.support.encryption.Encr;
 
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
@@ -65,6 +67,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 
 /**
@@ -376,6 +379,11 @@ public class Const {
    * An array of date conversion formats
    */
   private static String[] dateFormats;
+
+  /**
+   * An array of date (timeless) conversion formats
+   */
+  private static String[] dateTimelessFormats;
 
   /**
    * An array of number conversion formats
@@ -863,6 +871,11 @@ public class Const {
   public static final String KETTLE_MAX_LOGGING_REGISTRY_SIZE = "KETTLE_MAX_LOGGING_REGISTRY_SIZE";
 
   /**
+   * A variable to configure the logging registry's purge timer which will trigger the registry to cleanup entries.
+   */
+  public static final String KETTLE_LOGGING_REGISTRY_PURGE_TIMEOUT = "KETTLE_LOGGING_REGISTRY_PURGE_TIMEOUT";
+
+  /**
    * A variable to configure the kettle log tab refresh delay.
    */
   public static final String KETTLE_LOG_TAB_REFRESH_DELAY = "KETTLE_LOG_TAB_REFRESH_DELAY";
@@ -944,7 +957,7 @@ public class Const {
    * The XML file that contains the list of native Kettle two-way password encoder plugins
    */
   @SuppressWarnings( "squid:S2068" )
-  public static final String XML_FILE_KETTLE_PASSWORD_ENCODER_PLUGINS = "kettle-password-encoder-plugins.xml";
+  public static final String XML_FILE_KETTLE_PASSWORD_ENCODER_PLUGINS = Encr.XML_FILE_KETTLE_PASSWORD_ENCODER_PLUGINS;
 
   /**
    * The name of the environment variable that will contain the alternative location of the kettle-valuemeta-plugins.xml
@@ -956,20 +969,20 @@ public class Const {
    * Specifies the password encoding plugin to use by ID (Kettle is the default).
    */
   @SuppressWarnings( "squid:S2068" )
-  public static final String KETTLE_PASSWORD_ENCODER_PLUGIN = "KETTLE_PASSWORD_ENCODER_PLUGIN";
+  public static final String KETTLE_PASSWORD_ENCODER_PLUGIN = Encr.KETTLE_PASSWORD_ENCODER_PLUGIN;
 
   /**
    * The name of the environment variable that will contain the alternative location of the kettle-password-encoder-plugins.xml
    * file
    */
   @SuppressWarnings( "squid:S2068" )
-  public static final String KETTLE_PASSWORD_ENCODER_PLUGINS_FILE = "KETTLE_PASSWORD_ENCODER_PLUGINS_FILE";
+  public static final String KETTLE_PASSWORD_ENCODER_PLUGINS_FILE = Encr.KETTLE_PASSWORD_ENCODER_PLUGINS_FILE;
 
   /**
    * The name of the Kettle encryption seed environment variable for the KettleTwoWayPasswordEncoder class
    */
   @SuppressWarnings( "squid:S2068" )
-  public static final String KETTLE_TWO_WAY_PASSWORD_ENCODER_SEED = "KETTLE_TWO_WAY_PASSWORD_ENCODER_SEED";
+  public static final String KETTLE_TWO_WAY_PASSWORD_ENCODER_SEED = Encr.KETTLE_TWO_WAY_PASSWORD_ENCODER_SEED;
 
   /**
    * The XML file that contains the list of native Kettle logging plugins
@@ -1160,6 +1173,9 @@ public class Const {
   // See PDI-18470 for details
   public static final String KETTLE_COMPATIBILITY_DB_LOOKUP_USE_FIELDS_RETURN_TYPE_CHOSEN_IN_UI = "KETTLE_COMPATIBILITY_DB_LOOKUP_USE_FIELDS_RETURN_TYPE_CHOSEN_IN_UI";
 
+  // See PDI-PDI-18739 for details
+  public static final String KETTLE_COMPATIBILITY_TEXT_FILE_INPUT_USE_LENIENT_ENCLOSURE_HANDLING = "KETTLE_COMPATIBILITY_TEXT_FILE_INPUT_USE_LENIENT_ENCLOSURE_HANDLING";
+
   /**
    * The XML file that contains the list of native import rules
    */
@@ -1313,6 +1329,22 @@ public class Const {
    */
   public static final String KETTLE_ZIP_MAX_TEXT_SIZE_DEFAULT_STRING =
     String.valueOf( KETTLE_ZIP_MAX_TEXT_SIZE_DEFAULT );
+
+  /**
+   * <p>The default value for the {@link #KETTLE_ZIP_NEGATIVE_MIN_INFLATE} as a Double.</p>
+   * <p>Check PDI-18489 for more details.</p>
+   */
+  public static final Double KETTLE_ZIP_NEGATIVE_MIN_INFLATE = -1.0d;
+
+  /**
+   * <p>This environment variable is used to define whether the check of xlsx zip bomb is performed. This is set to false by default.</p>
+   */
+  public static final String KETTLE_XLSX_ZIP_BOMB_CHECK = "KETTLE_XLSX_ZIP_BOMB_CHECK";
+  private static final String KETTLE_XLSX_ZIP_BOMB_CHECK_DEFAULT = "false";
+  public static boolean checkXlsxZipBomb() {
+    String checkZipBomb = System.getProperty( KETTLE_XLSX_ZIP_BOMB_CHECK, KETTLE_XLSX_ZIP_BOMB_CHECK_DEFAULT );
+    return Boolean.valueOf( checkZipBomb );
+  }
 
   /**
    * <p>A variable to configure if the S3 input / output steps should use the Amazon Default Credentials Provider Chain
@@ -1955,12 +1987,11 @@ public class Const {
 
         while ( ip.hasMoreElements() ) {
           InetAddress in = ip.nextElement();
-          lastHostname = in.getHostName();
-          // System.out.println("  ip address bound : "+in.getHostAddress());
-          // System.out.println("  hostname         : "+in.getHostName());
-          // System.out.println("  Cann.hostname    : "+in.getCanonicalHostName());
-          // System.out.println("  ip string        : "+in.toString());
-          if ( !lastHostname.equalsIgnoreCase( "localhost" ) && !( lastHostname.indexOf( ':' ) >= 0 ) ) {
+          boolean hasNewHostName = !lastHostname.equalsIgnoreCase( "localhost" );
+          if ( InetAddressUtils.isIPv4Address( in.getHostAddress() ) || !hasNewHostName  ) {
+            lastHostname = in.getHostName();
+          }
+          if ( hasNewHostName && lastHostname.indexOf( ':' ) < 0 )  {
             break;
           }
         }
@@ -2814,7 +2845,8 @@ public class Const {
             // and reset the "concatSplit" buffer. Otherwise continue
             addSplit = oddNumberOfEnclosures;
           }
-          if ( addSplit ) {
+          // Check if enclosure is also using inside data
+          if ( addSplit || numEnclosures > 2 ) {
             String splitResult = concatSplit.toString();
             //remove enclosure from resulting split
             if ( removeEnclosure ) {
@@ -3176,6 +3208,22 @@ public class Const {
   }
 
   /**
+   * Returning the localized date conversion formats without time. They get created once on first request.
+   *
+   * @return
+   */
+  public static String[] getTimelessDateFormats() {
+    if ( dateTimelessFormats == null ) {
+      List<String> dateFormats = Arrays.asList( Const.getDateFormats() );
+      dateFormats = dateFormats.stream()
+        .filter( date -> !date.toLowerCase().contains( "hh" ) )
+        .collect( Collectors.toList() );
+      dateTimelessFormats = dateFormats.toArray( new String[dateFormats.size()] );
+    }
+    return dateTimelessFormats;
+  }
+
+  /**
    * Returning the localized number conversion formats. They get created once on first request.
    *
    * @return
@@ -3276,6 +3324,21 @@ public class Const {
       default:
         return string;
     }
+  }
+
+  /**
+   * Trims a Date by resetting the time part to zero
+   * @param date a Date object to trim (reset time to zero)
+   * @return a Date object with time part reset to zero
+   */
+  public static Date trimDate( Date date ) {
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTime( date );
+    calendar.set( Calendar.MILLISECOND, 0 );
+    calendar.set( Calendar.SECOND, 0 );
+    calendar.set( Calendar.MINUTE, 0 );
+    calendar.set( Calendar.HOUR_OF_DAY, 0 );
+    return calendar.getTime();
   }
 
   /**
